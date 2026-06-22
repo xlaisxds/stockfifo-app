@@ -64,13 +64,14 @@ jobs:
       - name: Build APK
         run: |
           yes | buildozer android debug 2>&1 | tee build_log.txt
-          echo "===== EXIT CODE: $? ====="
           echo "===== Conteúdo da pasta bin ====="
           ls -la bin/ || echo "Pasta bin não existe"
 
-      - name: Show last lines of log
+      - name: Show error lines
         if: always()
-        run: tail -n 200 build_log.txt
+        run: |
+          echo "===== Procurando por erros no log ====="
+          grep -n -i "error\|Exception\|Traceback\|failed" build_log.txt | head -100
 
       - name: Upload APK
         if: always()

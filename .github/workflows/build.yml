@@ -70,8 +70,11 @@ jobs:
       - name: Show error lines
         if: always()
         run: |
-          echo "===== Procurando por erros no log ====="
-          grep -n -i "error\|Exception\|Traceback\|failed" build_log.txt | head -100
+          echo "===== Última ocorrência de 'Error:' com contexto ====="
+          grep -n "Error:" build_log.txt | tail -5
+          echo ""
+          echo "===== 80 linhas antes da palavra 'Command failed' ====="
+          grep -n "Command failed" build_log.txt | tail -1 | cut -d: -f1 | xargs -I{} bash -c 'start=$(({}-80)); [ $start -lt 1 ] && start=1; sed -n "${start},{}p" build_log.txt'
 
       - name: Upload APK
         if: always()

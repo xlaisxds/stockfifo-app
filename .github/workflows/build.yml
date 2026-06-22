@@ -62,19 +62,35 @@ jobs:
           echo "33b6a2b64607f11b759f320ef9dff4ae5c47d97" > $HOME/.buildozer/android/platform/android-sdk/licenses/google-gdk-license
 
       - name: Build APK
+        env:
+          PYTHONUNBUFFERED: "1"
         run: |
-          yes | buildozer android debug 2>&1 | tee build_log.txt
+          set +e
+          yes | buildozer -v android debug > build_log.txt 2>&1
+          BUILD_EXIT=$?
+          echo "BUILD_EXIT_CODE=$BUILD_EXIT" >> $GITHUB_ENV
           echo "===== Conteúdo da pasta bin ====="
-          ls -la bin/ || echo "Pasta bin não existe"
+          ls -la bin/ 2>/dev/null || echo "Pasta bin não existe"
+          exit 0
 
-      - name: Show error lines
+      - name: Show error context
         if: always()
         run: |
-          echo "===== Última ocorrência de 'Error:' com contexto ====="
-          grep -n "Error:" build_log.txt | tail -5
+          echo "Build exit code was: $BUILD_EXIT_CODE"
           echo ""
-          echo "===== 80 linhas antes da palavra 'Command failed' ====="
-          grep -n "Command failed" build_log.txt | tail -1 | cut -d: -f1 | xargs -I{} bash -c 'start=$(({}-80)); [ $start -lt 1 ] && start=1; sed -n "${start},{}p" build_log.txt'
+          echo "===== Linhas com 'error' real (gcc/clang/python), ignorando ruído ====="
+          grep -n -iE "(^|[^a-z])error[^s]" build_log.txt | grep -viE "wno-error|fno-strict|deprecated|error=implicit" | tail -40
+          echo ""
+          echo "===== Últimas 60 linhas do log (fim absoluto) ====="
+          tail -n 60 build_log.txt
+
+      - name: Upload full build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-full
+          path: build_log.txt
+          if-no-files-found: warn
 
       - name: Upload APK
         if: always()

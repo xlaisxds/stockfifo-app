@@ -37,12 +37,19 @@ jobs:
 
       - name: Install Android SDK command-line tools
         run: |
-          mkdir -p $HOME/.buildozer/android/platform/android-sdk/cmdline-tools
-          cd $HOME/.buildozer/android/platform/android-sdk/cmdline-tools
+          SDK_DIR=$HOME/.buildozer/android/platform/android-sdk
+          mkdir -p $SDK_DIR/cmdline-tools
+          cd $SDK_DIR/cmdline-tools
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdtools.zip
           unzip -q cmdtools.zip
           mv cmdline-tools latest
           rm cmdtools.zip
+          # Cria estrutura no caminho antigo que o buildozer/p4a procura
+          mkdir -p $SDK_DIR/tools/bin
+          cp -r $SDK_DIR/cmdline-tools/latest/bin/* $SDK_DIR/tools/bin/
+          mkdir -p $SDK_DIR/tools/lib
+          cp -r $SDK_DIR/cmdline-tools/latest/lib/* $SDK_DIR/tools/lib/ 2>/dev/null || true
+          ls -la $SDK_DIR/tools/bin/
 
       - name: Pre-accept Android SDK licenses
         run: |
